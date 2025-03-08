@@ -1,0 +1,33 @@
+This code will fetch all the mail merge from the module(in this code deals module), merge them and then send them as an attachment in email.
+cid = "6632557000000627051"; // deal ID
+lead_mail_merge_template_resp = invokeurl
+[
+	url :"https://www.zohoapis.com/crm/v2/settings/templates?type=mailmerge&module=Deals"
+	type :GET
+	connection:"crm"
+];
+templates = lead_mail_merge_template_resp.get("templates");
+files_list = List();
+for each  temp_rec in templates
+{
+	temp_id = temp_rec.get("id");
+	temp_name = temp_rec.get("name");
+	map = {"download_mail_merge":{{"mail_merge_template":{"id":temp_id},"output_format":"pdf","file_name":temp_name + " - " + cid}}};
+	merge = invokeurl
+	[
+		url :"https://www.zohoapis.com/crm/v7/Deals/" + cid + "/actions/download_mail_merge"
+		type :POST
+		parameters:map.toString()
+		connection:"crm"
+	];
+	merge.setParamName("file");
+	files_list.add(merge);
+}
+sendmail
+[
+	from :zoho.loginuserid
+	to :"zubair4382@gmail.com"
+	subject :"Testing purpose"
+	message :"Test"
+	Attachments :file:files_list
+]
